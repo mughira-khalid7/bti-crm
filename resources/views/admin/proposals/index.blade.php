@@ -24,9 +24,11 @@
                         <option value="">-- Any --</option>
                         <option value="today" {{ request('date') == 'today' ? 'selected' : '' }}>Today</option>
                         <option value="yesterday" {{ request('date') == 'yesterday' ? 'selected' : '' }}>Yesterday</option>
-                        <option value="last_3_days" {{ request('date') == 'last_3_days' ? 'selected' : '' }}>Last 3 days</option>
+                        <option value="last_3_days" {{ request('date') == 'last_3_days' ? 'selected' : '' }}>Last 3 days
+                        </option>
                         <option value="last_week" {{ request('date') == 'last_week' ? 'selected' : '' }}>Last week</option>
-                        <option value="last_month" {{ request('date') == 'last_month' ? 'selected' : '' }}>Last month</option>
+                        <option value="last_month" {{ request('date') == 'last_month' ? 'selected' : '' }}>Last month
+                        </option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -43,7 +45,10 @@
                         <option value="">-- All BDs --</option>
                         @foreach ($users as $user)
                             <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
-                                {{ $user->name }} ({{ $user->email }})@if($user->trashed()) - Deactivated @endif</option>
+                                {{ $user->name }} ({{ $user->email }})@if ($user->trashed())
+                                    - Deactivated
+                                @endif
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -51,8 +56,10 @@
                     <label class="form-label">Status</label>
                     <select name="status" class="form-select">
                         <option value="">-- Any --</option>
-                        <option value="submitted" {{ request('status') == 'submitted' ? 'selected' : '' }}>Submitted</option>
-                        <option value="interviewing" {{ request('status') == 'interviewing' ? 'selected' : '' }}>Interviewing
+                        <option value="submitted" {{ request('status') == 'submitted' ? 'selected' : '' }}>Submitted
+                        </option>
+                        <option value="interviewing" {{ request('status') == 'interviewing' ? 'selected' : '' }}>
+                            Interviewing
                         </option>
                     </select>
                 </div>
@@ -77,7 +84,7 @@
                     </thead>
                     <tbody>
                         @forelse($proposals as $proposal)
-                            <tr @if($proposal->deleted_at) class="table-danger opacity-75" @endif>
+                            <tr @if ($proposal->deleted_at) class="table-danger opacity-75" @endif>
                                 <td>{{ $loop->iteration }}</td>
                                 <td>
                                     <a href="{{ route('admin.proposals.show', $proposal) }}"
@@ -85,13 +92,14 @@
                                     <div class="text-muted small">{{ Str::limit($proposal->job_description, 80) }}</div>
                                 </td>
                                 <td>
-                                    @if($proposal->user)
+                                    @if ($proposal->user)
                                         <div class="d-flex align-items-center">
                                             <x-avatar :user="$proposal->user" :size="32" class="me-2" />
                                             <span>
                                                 {{ $proposal->user->name }}
-                                                @if($proposal->user->trashed())
-                                                    <span class="badge bg-danger ms-1" style="font-size: 0.65rem;">Deactivated</span>
+                                                @if ($proposal->user->trashed())
+                                                    <span class="badge bg-danger ms-1"
+                                                        style="font-size: 0.65rem;">Deactivated</span>
                                                 @endif
                                             </span>
                                         </div>
@@ -101,13 +109,34 @@
                                 </td>
                                 <td><strong>{{ $proposal->connects_used }}</strong></td>
                                 <td>
-                                    <span
-                                        class="badge bg-{{ $proposal->status == 'interviewing' ? 'info' : 'secondary' }}">{{ ucfirst($proposal->status) }}</span>
+                                    @php
+                                        $statusColors = [
+                                            'copied' => 'warning',
+                                            'interviewing' => 'info',
+                                            'submitted' => 'secondary',
+                                            'deleted' => 'danger',
+                                            'viewed' => 'primary',
+                                            'meeting_scheduled' => 'success',
+                                            'phone_shared' => 'dark',
+                                        ];
+                                        $statusLabels = [
+                                            'meeting_scheduled' => 'Meeting Scheduled',
+                                            'phone_shared' => 'Phone Shared',
+                                        ];
+                                        $badgeColor = $statusColors[$proposal->status] ?? 'secondary';
+                                        $statusLabel = $statusLabels[$proposal->status] ?? ucfirst($proposal->status);
+                                    @endphp
+                                    <span class="badge bg-{{ $badgeColor }}">
+                                        {{ $statusLabel }}
+                                        @if ($proposal->is_copy)
+                                            <i class="fas fa-copy ms-1" title="This is a copy"></i>
+                                        @endif
+                                    </span>
                                 </td>
                                 <td>{{ \Carbon\Carbon::parse($proposal->submitted_at)->format('M d, Y') }}</td>
                                 <td class="text-end">
                                     <a href="{{ route('admin.proposals.show', $proposal) }}"
-                                        class="btn btn-sm btn-outline-primary me-1 @if($proposal->deleted_at) disabled opacity-50 @endif">
+                                        class="btn btn-sm btn-outline-primary me-1 @if ($proposal->deleted_at) disabled opacity-50 @endif">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     @if (!$proposal->deleted_at && $proposal->status !== 'interviewing')
@@ -117,11 +146,12 @@
                                         </button>
                                     @endif
                                     @if (!$proposal->deleted_at)
-                                        <form method="POST" action="{{ route('admin.proposals.destroy', $proposal) }}" class="d-inline"
-                                              onsubmit="return confirm('Are you sure you want to delete this proposal?')">
+                                        <form method="POST" action="{{ route('admin.proposals.destroy', $proposal) }}"
+                                            class="d-inline delete-form">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                onclick="confirmDelete(this.closest('form'))">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -146,28 +176,55 @@
 
 @section('scripts')
     <script>
+        function confirmDelete(form) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'Do you want to delete this proposal?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
+
         function confirmMoveToInterviewing(url, title) {
-            if (confirm(`Are you sure you want to move "${title}" to interviewing status?`)) {
-                fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            window.toast.success('Success!', 'Proposal moved to interviewing successfully!');
-                            setTimeout(() => window.location.reload(), 1000);
-                        } else {
-                            window.toast.error('Error!', data.message || 'Failed to move proposal.');
-                        }
-                    })
-                    .catch(error => {
-                        window.toast.error('Error!', 'An unexpected error occurred.');
-                    });
-            }
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `Do you want to move "${title}" to interviewing status?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, move it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                    'content'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire('Moved!', 'Proposal moved to interviewing successfully!', 'success');
+                                setTimeout(() => window.location.reload(), 1000);
+                            } else {
+                                Swal.fire('Error!', data.message || 'Failed to move proposal.', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire('Error!', 'An unexpected error occurred.', 'error');
+                        });
+                }
+            });
         }
     </script>
 @endsection

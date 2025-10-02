@@ -4,6 +4,7 @@ namespace App\Http\Controllers\BD;
 
 use App\Http\Controllers\Controller;
 use App\Models\Proposal;
+use App\Models\ProposalVersion;
 use App\Models\Goal;
 use App\Models\ActionLog;
 use Illuminate\Http\Request;
@@ -15,7 +16,9 @@ class ProposalController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = Proposal::where('user_id', $user->id)->orderByDesc('submitted_at');
+        $query = Proposal::where('user_id', $user->id)
+            ->where('is_copy', false)  // Exclude copied proposals for BD users
+            ->orderByDesc('submitted_at');
 
         $dateFilter = $request->get('date', 'today');
         $from = $request->get('from');
@@ -117,7 +120,7 @@ class ProposalController extends Controller
             'title' => 'required|string|max:255',
             'job_description' => 'required|string',
             'connects_used' => 'required|integer|min:0',
-            'url' => 'required|url',
+            'url' => ['required', 'url', 'regex:/^https:\/\/(www\.)?upwork\.com\//i'],
             'notes' => 'nullable|string',
             'submitted_at' => 'required|date',
         ], [
@@ -129,6 +132,7 @@ class ProposalController extends Controller
             'connects_used.min' => 'Connects used cannot be negative.',
             'url.required' => 'Enter the job posting URL.',
             'url.url' => 'Please enter a valid URL (including https://).',
+            'url.regex' => 'The job URL must be a valid Upwork URL (e.g., https://www.upwork.com/nx/proposals/...).',
             'submitted_at.required' => 'Select the date you submitted this proposal.',
             'submitted_at.date' => 'Submitted date must be a valid date.',
         ]);
@@ -191,7 +195,7 @@ class ProposalController extends Controller
             'title' => 'required|string|max:255',
             'job_description' => 'required|string',
             'connects_used' => 'required|integer|min:0',
-            'url' => 'required|url',
+            'url' => ['required', 'url', 'regex:/^https:\/\/(www\.)?upwork\.com\//i'],
             'notes' => 'nullable|string',
             'submitted_at' => 'required|date',
         ], [
@@ -203,6 +207,7 @@ class ProposalController extends Controller
             'connects_used.min' => 'Connects used cannot be negative.',
             'url.required' => 'Enter the job posting URL.',
             'url.url' => 'Please enter a valid URL (including https://).',
+            'url.regex' => 'The job URL must be a valid Upwork URL (e.g., https://www.upwork.com/nx/proposals/...).',
             'submitted_at.required' => 'Select the date you submitted this proposal.',
             'submitted_at.date' => 'Submitted date must be a valid date.',
         ]);
@@ -234,6 +239,12 @@ class ProposalController extends Controller
             }
         }
 
+        // Create a copy of the original proposal before updating (visible only to admin)
+        $this->createProposalCopy($proposal);
+
+        // Track changes for version history
+        $this->trackProposalChanges($proposal, $validated);
+
         $proposal->update($validated);
 
         if ($request->ajax()) {
@@ -247,6 +258,12 @@ class ProposalController extends Controller
     {
         $this->authorizeOwnership($proposal);
 
+        // Store previous status for logging
+        $previousStatus = $proposal->status;
+
+        // Change status to deleted before soft-deleting
+        $proposal->update(['status' => 'deleted']);
+
         $proposal->delete();
 
         ActionLog::create([
@@ -255,7 +272,10 @@ class ProposalController extends Controller
             'description' => 'BD deleted a proposal',
             'model_type' => Proposal::class,
             'model_id' => $proposal->id,
-            'metadata' => ['title' => $proposal->title],
+            'metadata' => [
+                'title' => $proposal->title,
+                'previous_status' => $previousStatus
+            ],
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
@@ -294,6 +314,81 @@ class ProposalController extends Controller
     {
         if ($proposal->user_id !== Auth::id()) {
             abort(403);
+        }
+    }
+
+    /**
+     * Track changes to a proposal and create a version record.
+     */
+    /**
+     * Create a copy of the proposal before updating (for admin review)
+     */
+    private function createProposalCopy(Proposal $proposal): void
+    {
+        // Only create a copy if this is not already a copy
+        if ($proposal->is_copy) {
+            return;
+        }
+
+        $copyData = $proposal->toArray();
+
+        // Remove fields that shouldn't be copied
+        unset($copyData['id'], $copyData['created_at'], $copyData['updated_at'], $copyData['deleted_at']);
+
+        // Set copy-specific fields
+        $copyData['is_copy'] = true;
+        $copyData['original_proposal_id'] = $proposal->id;
+        $copyData['status'] = 'copied';
+
+        // Create the copy
+        Proposal::create($copyData);
+    }
+
+    private function trackProposalChanges(Proposal $proposal, array $newData): void
+    {
+        $changes = [];
+        $trackedFields = Proposal::getTrackedFields();
+
+        foreach ($trackedFields as $field) {
+            $oldValue = $proposal->$field;
+            $newValue = $newData[$field] ?? null;
+
+            // Normalize values for comparison
+            if ($field === 'submitted_at') {
+                $oldValue = $oldValue ? Carbon::parse($oldValue)->format('Y-m-d H:i:s') : null;
+                $newValue = $newValue ? Carbon::parse($newValue)->format('Y-m-d H:i:s') : null;
+            }
+
+            // Track if changed
+            if ($oldValue != $newValue) {
+                $changes[$field] = [
+                    'old' => $oldValue,
+                    'new' => $newValue,
+                ];
+            }
+        }
+
+        // Only create a version if there were actual changes
+        if (!empty($changes)) {
+            // Get the next version number
+            $lastVersion = ProposalVersion::where('proposal_id', $proposal->id)
+                ->orderBy('version_number', 'desc')
+                ->first();
+            $nextVersion = $lastVersion ? $lastVersion->version_number + 1 : 1;
+
+            // Create snapshot of all tracked fields BEFORE the update
+            $snapshot = [];
+            foreach ($trackedFields as $field) {
+                $snapshot[$field] = $proposal->$field;
+            }
+
+            ProposalVersion::create([
+                'proposal_id' => $proposal->id,
+                'user_id' => Auth::id(),
+                'version_number' => $nextVersion,
+                'changes' => $changes,
+                'snapshot' => $snapshot,
+            ]);
         }
     }
 }

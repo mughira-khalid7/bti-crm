@@ -103,11 +103,11 @@
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <form method="POST" action="{{ route('bd.proposals.destroy', $proposal) }}"
-                                        class="d-inline"
-                                        onsubmit="return confirm('Are you sure you want to delete this proposal?')">
+                                        class="d-inline delete-form">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                            onclick="confirmDelete(this.closest('form'))">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -132,28 +132,55 @@
 
 @section('scripts')
     <script>
+        function confirmDelete(form) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'Do you want to delete this proposal?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
+
         function confirmMoveToInterviewing(url, title) {
-            if (confirm(`Are you sure you want to move "${title}" to interviewing status?`)) {
-                fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            window.toast.success('Success!', 'Proposal moved to interviewing successfully!');
-                            setTimeout(() => window.location.reload(), 1000);
-                        } else {
-                            window.toast.error('Error!', data.message || 'Failed to move proposal.');
-                        }
-                    })
-                    .catch(error => {
-                        window.toast.error('Error!', 'An unexpected error occurred.');
-                    });
-            }
+            Swal.fire({
+                title: `Are you sure?`,
+                text: `Do you want to move "${title}" to interviewing status?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, move it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                    'content'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire('Moved!', 'Proposal moved to interviewing successfully!', 'success');
+                                setTimeout(() => window.location.reload(), 1000);
+                            } else {
+                                Swal.fire('Error!', data.message || 'Failed to move proposal.', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire('Error!', 'An unexpected error occurred.', 'error');
+                        });
+                }
+            });
         }
     </script>
 @endsection

@@ -36,10 +36,11 @@
                 </div>
                 <div class="col-12">
                     <label class="form-label fw-semibold">Job URL <span class="text-danger">*</span></label>
-                    <input type="url" name="url" value="{{ old('url') }}" class="form-control @error('url') is-invalid @enderror" required placeholder="https://example.com/job-posting">
+                    <input type="url" name="url" value="{{ old('url') }}" class="form-control @error('url') is-invalid @enderror" required placeholder="https://www.upwork.com/nx/proposals/...">
                     @error('url')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                    <small class="form-text text-muted">Enter a valid Upwork URL (e.g., https://www.upwork.com/nx/proposals/...)</small>
                 </div>
                 <div class="col-12">
                     <label class="form-label fw-semibold">Job Description <span class="text-danger">*</span></label>

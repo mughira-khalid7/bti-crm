@@ -69,7 +69,44 @@ class ProposalController extends Controller
         $proposal = Proposal::withTrashed()->with(['user' => function($query) {
             $query->withTrashed();
         }])->findOrFail($id);
-        return view('admin.proposals.show', compact('proposal'));
+
+        // Get the latest version to determine what was recently changed
+        $latestVersion = $proposal->versions()->with('user')->first();
+        $recentChanges = $latestVersion ? $latestVersion->changes : [];
+
+        return view('admin.proposals.show', compact('proposal', 'recentChanges'));
+    }
+
+    /**
+     * Get version history for a proposal (AJAX endpoint)
+     */
+    public function versionHistory($id)
+    {
+        $proposal = Proposal::withTrashed()->findOrFail($id);
+
+        $versions = $proposal->versions()
+            ->with('user')
+            ->orderBy('version_number', 'desc')
+            ->get()
+            ->map(function ($version) {
+                return [
+                    'id' => $version->id,
+                    'version_number' => $version->version_number,
+                    'user' => $version->user ? $version->user->name : 'Deleted User',
+                    'user_avatar' => $version->user && $version->user->avatar
+                        ? asset('avatars/' . $version->user->avatar)
+                        : null,
+                    'created_at' => $version->created_at->format('M d, Y \a\t h:i A'),
+                    'created_at_human' => $version->created_at->diffForHumans(),
+                    'changes' => $version->changes,
+                    'snapshot' => $version->snapshot,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'versions' => $versions,
+        ]);
     }
 
     public function moveToInterviewing(Request $request, Proposal $proposal)

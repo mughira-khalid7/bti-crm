@@ -56,13 +56,7 @@
                                 <td>{{ $loop->iteration }}</td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        @if($user->avatar_url)
-                                            <img src="{{ $user->avatar_url }}" alt="Avatar" class="me-2" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">
-                                        @else
-                                            <div class="rounded-circle avatar-dynamic d-flex align-items-center justify-content-center me-2" data-bs-toggle="tooltip" title="{{ $user->name }}" style="width:32px; height:32px; font-size:.875rem;">
-                                                {{ strtoupper(substr($user->name,0,2)) }}
-                                            </div>
-                                        @endif
+                                        <x-avatar :user="$user" :size="32" class="me-2" />
                                         {{ $user->name }}
                                     </div>
                                 </td>

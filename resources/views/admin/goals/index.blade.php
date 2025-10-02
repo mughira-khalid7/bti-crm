@@ -44,14 +44,15 @@
                                     @endphp
                                     <tr>
                                         <td>
-                                            @if($goal->user)
+                                            @if ($goal->user)
                                                 <div class="d-flex align-items-center">
                                                     <x-avatar :user="$goal->user" :size="32" class="me-2" />
                                                     <div>
                                                         <div class="fw-bold">
                                                             {{ $goal->user->name }}
-                                                            @if($goal->user->trashed())
-                                                                <span class="badge bg-danger ms-1" style="font-size: 0.65rem;">Deactivated</span>
+                                                            @if ($goal->user->trashed())
+                                                                <span class="badge bg-danger ms-1"
+                                                                    style="font-size: 0.65rem;">Deactivated</span>
                                                             @endif
                                                         </div>
                                                         <small class="text-muted">{{ $goal->user->email }}</small>
@@ -67,7 +68,8 @@
                                             <span class="badge bg-primary">{{ $goal->daily_goal }}</span>
                                         </td>
                                         <td>
-                                            <span class="badge bg-info"><i class="fas fa-link me-1"></i>{{ $goal->allowed_connects ?? 0 }}</span>
+                                            <span class="badge bg-info"><i
+                                                    class="fas fa-link me-1"></i>{{ $goal->allowed_connects ?? 0 }}</span>
                                         </td>
                                         <td>
                                             <span class="fw-bold">{{ $todayCount }}</span>
@@ -91,28 +93,23 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <div class="btn-group btn-group-sm d-flex align-items-center">
-                                                    <a href="{{ route('admin.goals.show', $goal) }}"
-                                                        class="btn btn-outline-info" title="View Details">
-                                                        <i class="fas fa-eye"></i>
-                                                    </a>
-                                                    <a href="{{ route('admin.goals.edit', $goal) }}"
-                                                        class="btn btn-outline-primary" title="Edit Goal">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                </div>
-                                                <form method="POST" action="{{ route('admin.goals.destroy', $goal) }}"
-                                                    class="d-inline"
-                                                    onsubmit="return confirm('Are you sure you want to delete this goal?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-outline-danger"
-                                                        title="Delete Goal">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
+                                            <a href="{{ route('admin.goals.show', $goal) }}" class="btn btn-outline-info"
+                                                title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ route('admin.goals.edit', $goal) }}"
+                                                class="btn btn-outline-primary" title="Edit Goal">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form method="POST" action="{{ route('admin.goals.destroy', $goal) }}"
+                                                class="d-inline"
+                                                onsubmit="return confirm('Are you sure you want to delete this goal?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-outline-danger" title="Delete Goal">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 @empty

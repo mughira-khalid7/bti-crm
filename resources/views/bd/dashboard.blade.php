@@ -201,7 +201,7 @@
                                         </td>
                                         <td class="py-3">
                                             <small class="text-muted" style="font-size: 0.75rem;">
-                                                {{ \Carbon\Carbon::parse($p->submitted_at)->diffForHumans() }}
+                                                {{ $p->created_at->diffForHumans() }}
                                             </small>
                                         </td>
                                     </tr>
@@ -257,7 +257,7 @@
                                         </td>
                                         <td class="py-3">
                                             <small class="text-muted" style="font-size: 0.75rem;">
-                                                {{ \Carbon\Carbon::parse($p->submitted_at)->diffForHumans() }}
+                                                {{ $p->created_at->diffForHumans() }}
                                             </small>
                                         </td>
                                     </tr>

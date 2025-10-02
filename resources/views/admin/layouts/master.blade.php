@@ -116,8 +116,10 @@
         }
 
         .main-content {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
+            /* margin-left: var(--sidebar-width); */
+            /* min-height: 100vh; */
+            position: relative;
+            /* width: calc(100% - var(--sidebar-width)); */
         }
 
         .navbar-custom {
@@ -128,8 +130,10 @@
             display: flex;
             align-items: center;
             padding: 0 2rem;
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: var(--sidebar-width);
+            right: 0;
             z-index: 999;
         }
 
@@ -141,7 +145,11 @@
         }
 
         .content {
-            padding: 2rem;
+            padding-top: calc(60px + 2rem);
+            margin-left: 0;
+            margin-right: 0;
+            width: 100%;
+            padding-left: 240px;
         }
 
         /* Cards */
@@ -156,12 +164,14 @@
         .card.widget {
             min-height: 120px;
         }
+
         .card.widget .card-body {
             display: flex;
             align-items: center;
             padding: 1rem !important;
             gap: .75rem;
         }
+
         .card.widget .circular-icon,
         .card.widget .rounded-circle {
             width: 48px !important;
@@ -221,11 +231,30 @@
         }
 
         /* Enforce brand primary for Bootstrap utility classes */
-        .bg-primary { background-color: var(--primary-color) !important; }
-        .text-bg-primary { background-color: var(--primary-color) !important; color: #fff !important; }
-        .border-primary { border-color: var(--primary-color) !important; }
-        .btn-outline-primary { color: var(--primary-color) !important; border-color: var(--primary-color) !important; }
-        .btn-outline-primary:hover, .btn-outline-primary:focus { background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: #fff !important; }
+        .bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+
+        .text-bg-primary {
+            background-color: var(--primary-color) !important;
+            color: #fff !important;
+        }
+
+        .border-primary {
+            border-color: var(--primary-color) !important;
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+        }
+
+        .btn-outline-primary:hover,
+        .btn-outline-primary:focus {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+            color: #fff !important;
+        }
 
         /* Tables */
         .table {
@@ -622,6 +651,15 @@
             margin: 0.5rem 0;
         }
 
+        .container,
+        .container-lg,
+        .container-md,
+        .container-sm,
+        .container-xl,
+        .container-xxl {
+            max-width: 1540px !important;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
@@ -636,10 +674,11 @@
 
             .main-content {
                 margin-left: 0;
+                width: 100%;
             }
 
-            .content {
-                padding: 1rem;
+            .navbar-custom {
+                left: 0;
             }
 
             .sidebar-toggle {
@@ -680,94 +719,125 @@
 </head>
 
 <body>
-    <!-- Sidebar -->
-    <nav class="sidebar">
-        <div class="sidebar-header">
-            <a href="{{ route('admin.dashboard') }}" class="sidebar-brand">
-                <img src="{{ asset('bti logo 1.png') }}" alt="BTI Logo">
-            </a>
+    <div>
+        <div>
+            <nav class="sidebar">
+                <div class="sidebar-header">
+                    <a href="{{ route('admin.dashboard') }}" class="sidebar-brand">
+                        <img src="{{ asset('bti logo 1.png') }}" alt="BTI Logo">
+                    </a>
+                </div>
+                <div class="sidebar-nav">
+                    <a href="{{ route('admin.dashboard') }}"
+                        class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                    <a href="{{ route('admin.users.index') }}"
+                        class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <i class="fas fa-users"></i>
+                        BD Users
+                    </a>
+                    <a href="{{ route('admin.goals.index') }}"
+                        class="{{ request()->routeIs('admin.goals.*') ? 'active' : '' }}">
+                        <i class="fas fa-bullseye"></i>
+                        Goals
+                    </a>
+                    <a href="{{ route('admin.proposals.index') }}"
+                        class="{{ request()->routeIs('admin.proposals.*') ? 'active' : '' }}">
+                        <i class="fas fa-file-alt"></i>
+                        Proposals
+                    </a>
+                    <a href="{{ route('admin.upwork-profiles.index') }}"
+                        class="{{ request()->routeIs('admin.upwork-profiles.*') ? 'active' : '' }}">
+                        <i class="fas fa-user-circle"></i>
+                        Profile (Up-work)
+                    </a>
+                    <a href="{{ route('admin.calendar.index') }}"
+                        class="{{ request()->routeIs('admin.calendar.*') ? 'active' : '' }}">
+                        <i class="fas fa-calendar-alt"></i>
+                        Calendar
+                    </a>
+
+
+                </div>
+            </nav>
         </div>
-        <div class="sidebar-nav">
-            <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                <i class="fas fa-tachometer-alt"></i>
-                Dashboard
-            </a>
-            <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                <i class="fas fa-users"></i>
-                BD Users
-            </a>
-            <a href="{{ route('admin.proposals.index') }}" class="{{ request()->routeIs('admin.proposals.*') ? 'active' : '' }}">
-                <i class="fas fa-file-alt"></i>
-                Proposals
-            </a>
-            <a href="{{ route('admin.goals.index') }}" class="{{ request()->routeIs('admin.goals.*') ? 'active' : '' }}">
-                <i class="fas fa-bullseye"></i>
-                Goals
-            </a>
-
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Navbar -->
-        <nav class="navbar navbar-custom">
-            <div class="d-flex align-items-center">
-                <button class="btn btn-link text-decoration-none me-3 d-md-none" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1 class="navbar-brand mb-0">BD CRM – Admin Dashboard</h1>
-            </div>
-            <div class="ms-auto">
-                <div class="dropdown">
-                    <button class="btn btn-link dropdown-toggle d-flex align-items-center text-decoration-none" type="button" data-bs-toggle="dropdown">
-                        @php($me = Auth::user())
-                        <x-avatar :user="$me" :size="40" class="me-2" />
-                        <span class="text-dark">{{ $me->name ?? 'Admin User' }}</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="fas fa-user me-2"></i>Edit Profile</a></li>
-
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                                @csrf
-                                <button type="submit" class="dropdown-item">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+        <div>
+            <!-- Main Content -->
+            <div class="main-content">
+                <div class="container">
+                    <!-- Navbar -->
+                    <nav class="navbar navbar-custom">
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-link text-decoration-none me-3 d-md-none" onclick="toggleSidebar()">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <h1 class="navbar-brand mb-0">BD CRM – Admin Dashboard</h1>
+                        </div>
+                        <div class="ms-auto">
+                            <div class="dropdown">
+                                <button
+                                    class="btn btn-link dropdown-toggle d-flex align-items-center text-decoration-none"
+                                    type="button" data-bs-toggle="dropdown">
+                                    @php($me = Auth::user())
+                                    <x-avatar :user="$me" :size="40" class="me-2" />
+                                    <span class="text-dark">{{ $me->name ?? 'Admin User' }}</span>
                                 </button>
-                            </form>
-                        </li>
-                    </ul>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i
+                                                class="fas fa-user me-2"></i>Edit Profile</a></li>
+
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <!-- Content -->
+                    <div class="content">
+                        @yield('content')
+                    </div>
                 </div>
             </div>
-        </nav>
 
-        <!-- Content -->
-        <div class="content">
-            @yield('content')
         </div>
     </div>
+    <!-- Sidebar -->
+
+
+
 
     <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1060;">
-        @if(session('success'))
+        @if (session('success'))
             <x-toast type="success" title="Success!" message="{{ session('success') }}" />
         @endif
 
-        @if(session('error'))
+        @if (session('error'))
             <x-toast type="error" title="Error!" message="{{ session('error') }}" />
         @endif
 
-        @if(session('warning'))
+        @if (session('warning'))
             <x-toast type="warning" title="Warning!" message="{{ session('warning') }}" />
         @endif
 
-        @if(session('info'))
+        @if (session('info'))
             <x-toast type="info" title="Info" message="{{ session('info') }}" />
         @endif
 
-        @if($errors->any())
-            @foreach($errors->all() as $error)
+        @if ($errors->any())
+            @foreach ($errors->all() as $error)
                 <x-toast type="error" title="Validation Error" message="{{ $error }}" />
             @endforeach
         @endif
@@ -775,6 +845,9 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Sweet Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Custom JS -->
     <script>
@@ -866,8 +939,8 @@
         window.toast = new ToastNotification();
 
         // Dynamic avatar colors + tooltips
-        function initDynamicAvatars(root=document) {
-            const palette = ['#e67717','#1e88e5','#43a047','#8e24aa','#fb8c00','#00acc1','#f4511e','#3949ab'];
+        function initDynamicAvatars(root = document) {
+            const palette = ['#e67717', '#1e88e5', '#43a047', '#8e24aa', '#fb8c00', '#00acc1', '#f4511e', '#3949ab'];
             const avatars = root.querySelectorAll('.avatar-dynamic, .profile-avatar');
             avatars.forEach((el) => {
                 const color = palette[Math.floor(Math.random() * palette.length)];
@@ -906,61 +979,78 @@
                 const method = this.method;
 
                 fetch(url, {
-                    method: method,
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                })
-                .then(async response => {
-                    const contentType = response.headers.get('content-type') || '';
-                    const data = contentType.includes('application/json') ? await response.json() : {};
-                    if (response.ok && data.success) {
-                        window.toast.success('Success!', successMessage);
-                        if (data.redirect) {
-                            setTimeout(() => window.location.href = data.redirect, 800);
+                        method: method,
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                'content')
                         }
-                        return;
-                    }
-                    if (response.status === 422 && data && data.errors) {
-                        const firstField = Object.keys(data.errors)[0];
-                        const firstMsg = data.errors[firstField][0];
-                        window.toast.error('Validation Error', firstMsg || errorMessage || 'Please correct the form.');
-                        return;
-                    }
-                    window.toast.error('Error!', (data && data.message) || errorMessage || 'An unexpected error occurred.');
-                })
-                .catch(error => {
-                    window.toast.error('Error!', 'An unexpected error occurred.');
-                });
+                    })
+                    .then(async response => {
+                        const contentType = response.headers.get('content-type') || '';
+                        const data = contentType.includes('application/json') ? await response.json() : {};
+                        if (response.ok && data.success) {
+                            window.toast.success('Success!', successMessage);
+                            if (data.redirect) {
+                                setTimeout(() => window.location.href = data.redirect, 800);
+                            }
+                            return;
+                        }
+                        if (response.status === 422 && data && data.errors) {
+                            const firstField = Object.keys(data.errors)[0];
+                            const firstMsg = data.errors[firstField][0];
+                            window.toast.error('Validation Error', firstMsg || errorMessage ||
+                                'Please correct the form.');
+                            return;
+                        }
+                        window.toast.error('Error!', (data && data.message) || errorMessage ||
+                            'An unexpected error occurred.');
+                    })
+                    .catch(error => {
+                        window.toast.error('Error!', 'An unexpected error occurred.');
+                    });
             });
         }
 
-        // Global helper for delete confirmations with toast
+        // Global helper for delete confirmations with SweetAlert
         function confirmDelete(element, url, successMessage = 'Item deleted successfully!') {
-            if (confirm('Are you sure you want to delete this item?')) {
-                fetch(url, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.toast.success('Success!', successMessage);
-                        // Remove the element from DOM
-                        element.closest('tr')?.remove();
-                    } else {
-                        window.toast.error('Error!', data.message || 'Failed to delete item.');
-                    }
-                })
-                .catch(error => {
-                    window.toast.error('Error!', 'An unexpected error occurred.');
-                });
-            }
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'Do you want to delete this item?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(url, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                    'content'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire('Deleted!', successMessage, 'success');
+                                // Remove the element from DOM and reload after a delay
+                                setTimeout(() => {
+                                    element.closest('tr')?.remove();
+                                    window.location.reload();
+                                }, 1000);
+                            } else {
+                                Swal.fire('Error!', data.message || 'Failed to delete item.', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire('Error!', 'An unexpected error occurred.', 'error');
+                        });
+                }
+            });
         }
 
         // Fix pagination styling issues
@@ -997,6 +1087,24 @@
                 return response;
             });
         };
+
+        // Toggle sidebar collapse with Sweet Alert
+        function toggleSidebarCollapse() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const navbar = document.querySelector('.navbar-custom');
+
+            sidebar.classList.toggle('collapsed');
+            if (sidebar.classList.contains('collapsed')) {
+                mainContent.style.marginLeft = '0';
+                navbar.style.marginLeft = '0';
+                Swal.fire('Sidebar Collapsed', 'The sidebar has been collapsed.', 'info');
+            } else {
+                mainContent.style.marginLeft = 'var(--sidebar-width)';
+                navbar.style.marginLeft = 'var(--sidebar-width)';
+                Swal.fire('Sidebar Expanded', 'The sidebar has been expanded.', 'info');
+            }
+        }
     </script>
 
     @yield('scripts')

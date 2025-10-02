@@ -118,6 +118,8 @@
         .main-content {
             margin-left: var(--sidebar-width);
             min-height: 100vh;
+            position: relative;
+            width: calc(100% - var(--sidebar-width));
         }
 
         .navbar-custom {
@@ -128,8 +130,10 @@
             display: flex;
             align-items: center;
             padding: 0 2rem;
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: var(--sidebar-width);
+            right: 0;
             z-index: 999;
         }
 
@@ -142,6 +146,10 @@
 
         .content {
             padding: 2rem;
+            padding-top: calc(60px + 2rem);
+            margin-left: 0;
+            margin-right: 0;
+            width: 100%;
         }
 
         /* Cards */
@@ -541,10 +549,16 @@
 
             .main-content {
                 margin-left: 0;
+                width: 100%;
+            }
+
+            .navbar-custom {
+                left: 0;
             }
 
             .content {
                 padding: 1rem;
+                padding-top: calc(60px + 1rem);
             }
 
             .pagination {
@@ -596,6 +610,14 @@
             <a href="{{ route('bd.interviewing.index') }}" class="{{ request()->routeIs('bd.interviewing.*') ? 'active' : '' }}">
                 <i class="fas fa-video"></i>
                 Interviews
+            </a>
+            <a href="{{ route('bd.upwork-profiles.index') }}" class="{{ request()->routeIs('bd.upwork-profiles.*') ? 'active' : '' }}">
+                <i class="fas fa-user-circle"></i>
+                Profile (Up-work)
+            </a>
+            <a href="{{ route('bd.calendar.index') }}" class="{{ request()->routeIs('bd.calendar.*') ? 'active' : '' }}">
+                <i class="fas fa-calendar-alt"></i>
+                Calendar
             </a>
         </div>
     </nav>
@@ -667,6 +689,9 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+     <!-- Sweet Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Custom JS -->
     <script>
@@ -744,6 +769,24 @@
             document.querySelector('.sidebar').classList.toggle('show');
         }
 
+        // Toggle sidebar collapse with Sweet Alert
+        function toggleSidebarCollapse() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const navbar = document.querySelector('.navbar-custom');
+
+            sidebar.classList.toggle('collapsed');
+            if (sidebar.classList.contains('collapsed')) {
+                mainContent.style.marginLeft = '0';
+                navbar.style.marginLeft = '0';
+                Swal.fire('Sidebar Collapsed', 'The sidebar has been collapsed.', 'info');
+            } else {
+                mainContent.style.marginLeft = 'var(--sidebar-width)';
+                navbar.style.marginLeft = 'var(--sidebar-width)';
+                Swal.fire('Sidebar Expanded', 'The sidebar has been expanded.', 'info');
+            }
+        }
+
         // AJAX helper for form submissions with toast notifications
         function submitFormWithToast(form, successMessage, errorMessage) {
             form.addEventListener('submit', function(e) {
@@ -785,29 +828,42 @@
             });
         }
 
-        // Global helper for delete confirmations with toast
+        // Global helper for delete confirmations with SweetAlert
         function confirmDelete(element, url, successMessage = 'Item deleted successfully!') {
-            if (confirm('Are you sure you want to delete this item?')) {
-                fetch(url, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.toast.success('Success!', successMessage);
-                        element.closest('tr')?.remove();
-                    } else {
-                        window.toast.error('Error!', data.message || 'Failed to delete item.');
-                    }
-                })
-                .catch(error => {
-                    window.toast.error('Error!', 'An unexpected error occurred.');
-                });
-            }
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'Do you want to delete this item?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(url, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Deleted!', successMessage, 'success');
+                            // Reload page after a delay
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            Swal.fire('Error!', data.message || 'Failed to delete item.', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire('Error!', 'An unexpected error occurred.', 'error');
+                    });
+                }
+            });
         }
 
         // Dynamic avatar colors + tooltips
