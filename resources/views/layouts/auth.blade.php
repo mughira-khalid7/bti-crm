@@ -8,7 +8,9 @@
     <title>{{ config('app.name', 'BD CRM') }}</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" href="{{ asset('faviconfd.ico') }}" sizes="any">
+    <link rel="shortcut icon" href="{{ asset('faviconfd.ico') }}">
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -154,14 +156,8 @@
 </head>
 <body>
     <div class="min-vh-100 d-flex align-items-center justify-content-center py-4">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-12 col-md-8 col-lg-6 col-xl-5">
-                    <div class="card auth-card p-4 p-md-5">
-                        @yield('content')
-                    </div>
-                </div>
-            </div>
+        <div class="card auth-card p-4 p-md-5" style="margin: 0 1rem;">
+            @yield('content')
         </div>
     </div>
 

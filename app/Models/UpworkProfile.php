@@ -78,4 +78,12 @@ class UpworkProfile extends Model
         return $this->belongsToMany(User::class, 'upwork_profile_user', 'upwork_profile_id', 'user_id')
                     ->where('role', 'bd');
     }
+
+    /**
+     * Get all users assigned to this profile (alias for assignedBds for backward compatibility)
+     */
+    public function users()
+    {
+        return $this->assignedBds();
+    }
 }

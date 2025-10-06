@@ -68,6 +68,7 @@
 
         <!-- Right Column (4 columns) -->
         <div class="col-lg-4">
+            <div class="sidebar-scroll">
             <!-- Client Information Card -->
             <div class="card shadow-sm border-0 mb-3">
                 <div class="card-header bg-white border-bottom py-2">
@@ -112,6 +113,22 @@
                             <span class="text-muted small">(25 reviews)</span>
                         </div>
                     </div>
+
+                    @if ($proposal->upworkProfile)
+                        <div class="mb-0">
+                            <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.75rem;">Upwork Profile</label>
+                            <div class="d-flex align-items-center p-2 bg-light rounded">
+                                <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center me-2"
+                                    style="width: 32px; height: 32px;">
+                                    <i class="fas fa-user-circle text-success" style="font-size: 0.875rem;"></i>
+                                </div>
+                                <div style="line-height: 1.3;">
+                                    <div class="fw-semibold" style="font-size: 0.813rem;">{{ $proposal->upworkProfile->profile_name }}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{ $proposal->upworkProfile->country }} - {{ $proposal->upworkProfile->username }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -196,6 +213,76 @@
                 </div>
             </div>
 
+            <!-- Meeting Information Card (visible to assigned BD/participants) -->
+            @if ($proposal->meeting && $proposal->meeting->count() > 0)
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-header bg-white border-bottom py-2">
+                    <h6 class="mb-0 fw-bold" style="font-size: 0.875rem;"><i class="fas fa-calendar-alt me-2 text-primary"></i>Scheduled Meeting</h6>
+                </div>
+                <div class="card-body p-3">
+                    @php $meeting = $proposal->meeting->first(); @endphp
+
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.75rem;">Meeting Title</label>
+                        <div class="p-2 bg-light rounded" style="font-size: 0.875rem;">
+                            <i class="fas fa-video me-2 text-primary"></i>
+                            <span class="fw-bold">{{ $meeting->title }}</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.75rem;">Scheduled Date & Time</label>
+                        <div class="p-2 bg-light rounded" style="font-size: 0.875rem;">
+                            <i class="fas fa-clock me-2 text-success"></i>
+                            <span class="fw-bold">{{ $meeting->scheduled_at->format('M d, Y \a\t h:i A') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.75rem;">Assigned BD</label>
+                        <div class="d-flex align-items-center p-2 bg-light rounded">
+                            <x-avatar :user="$meeting->bdUser" :size="32" class="me-2" />
+                            <div style="line-height: 1.3;">
+                                <div class="fw-semibold" style="font-size: 0.813rem;">{{ $meeting->bdUser->name }}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">{{ $meeting->bdUser->email }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if ($meeting->meeting_link)
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.75rem;">Meeting Link</label>
+                        <div class="p-2 bg-light rounded" style="font-size: 0.875rem;">
+                            <a href="{{ $meeting->meeting_link }}" target="_blank" class="text-decoration-none"><i class="fas fa-external-link-alt me-2 text-primary"></i>Join Meeting</a>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if ($meeting->location)
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.75rem;">Location</label>
+                        <div class="p-2 bg-light rounded" style="font-size: 0.875rem;">
+                            <i class="fas fa-map-marker-alt me-2 text-danger"></i>
+                            <span>{{ $meeting->location }}</span>
+                        </div>
+                    </div>
+                    @endif
+
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.75rem;">Meeting Type</label>
+                        <div class="p-2 bg-light rounded" style="font-size: 0.875rem;">
+                            @php
+                                $typeIcons = ['video_call' => 'fas fa-video','phone_call' => 'fas fa-phone','in_person' => 'fas fa-handshake'];
+                                $typeLabels = ['video_call' => 'Video Call','phone_call' => 'Phone Call','in_person' => 'In-Person'];
+                            @endphp
+                            <i class="{{ $typeIcons[$meeting->meeting_type] ?? 'fas fa-calendar' }} me-2 text-info"></i>
+                            <span>{{ $typeLabels[$meeting->meeting_type] ?? ucfirst($meeting->meeting_type) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <!-- Quick Actions Card -->
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white border-bottom py-2">
@@ -228,8 +315,13 @@
                     </form>
                 </div>
             </div>
+            </div>
         </div>
     </div>
+    <style>
+        /* Make right column flow with page (remove internal scroll) */
+        .sidebar-scroll { max-height: none; overflow: visible; padding-right: 0; }
+    </style>
 @endsection
 
 @section('scripts')

@@ -47,6 +47,7 @@
                             <th>Status</th>
                             <th>Account Status</th>
                             <th>Proposals</th>
+                            <th>Notes</th>
                             <th class="text-end">Actions</th>
                         </tr>
                     </thead>
@@ -76,6 +77,11 @@
                                     @endif
                                 </td>
                                 <td><strong>{{ $user->proposals()->count() }}</strong></td>
+                                <td>
+                                    <a href="{{ route('admin.notes.show', $user->id) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-sticky-note me-1"></i> View Notes
+                                    </a>
+                                </td>
                                 <td class="text-end">
                                     @if($user->trashed())
                                         <form action="{{ route('admin.users.restore', $user->id) }}" method="POST" class="d-inline">

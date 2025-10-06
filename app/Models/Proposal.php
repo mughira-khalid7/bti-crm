@@ -13,6 +13,7 @@ class Proposal extends Model
 
     protected $fillable = [
         'user_id',
+        'upwork_profile_id',
         'title',
         'job_description',
         'connects_used',
@@ -22,6 +23,7 @@ class Proposal extends Model
         'submitted_at',
         'is_copy',
         'original_proposal_id',
+        'deletion_type',
     ];
 
     /**
@@ -30,6 +32,14 @@ class Proposal extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
+    }
+
+    /**
+     * Get the upwork profile associated with this proposal.
+     */
+    public function upworkProfile(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\UpworkProfile::class);
     }
 
     /**
@@ -65,6 +75,14 @@ class Proposal extends Model
     }
 
     /**
+     * Get the meeting for this proposal.
+     */
+    public function meeting(): HasMany
+    {
+        return $this->hasMany(Meeting::class);
+    }
+
+    /**
      * Get the tracked fields for version comparison.
      */
     public static function getTrackedFields(): array
@@ -76,6 +94,7 @@ class Proposal extends Model
             'url',
             'notes',
             'submitted_at',
+            'upwork_profile_id',
         ];
     }
 }

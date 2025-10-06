@@ -69,6 +69,11 @@ class User extends Authenticatable
         return $this->hasMany(ActionLog::class);
     }
 
+    public function bdNotes()
+    {
+        return $this->hasMany(BDNote::class);
+    }
+
     public function getAvatarUrlAttribute(): ?string
     {
         if (!$this->avatar) {

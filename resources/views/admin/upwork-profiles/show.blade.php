@@ -74,8 +74,9 @@
                                     <i class="fas fa-at text-info fs-5 me-2"></i>
                                     <label class="form-label fw-bold mb-0">Username</label>
                                 </div>
-                                <div class="info-value">
-                                    <code class="bg-white px-2 py-1 rounded border">{{ $upworkProfile->username }}</code>
+                                <div class="info-value d-flex align-items-center gap-2">
+                                    <code id="usernameField" class="bg-white px-2 py-1 rounded border">********</code>
+                                    <button id="toggleUsername" type="button" class="btn btn-sm btn-outline-secondary">Show</button>
                                 </div>
                             </div>
                         </div>
@@ -85,8 +86,9 @@
                                     <i class="fas fa-key text-warning fs-5 me-2"></i>
                                     <label class="form-label fw-bold mb-0">Password</label>
                                 </div>
-                                <div class="info-value">
-                                    <code class="bg-white px-2 py-1 rounded border">{{ $upworkProfile->password }}</code>
+                                <div class="info-value d-flex align-items-center gap-2">
+                                    <code id="passwordField" class="bg-white px-2 py-1 rounded border">********</code>
+                                    <button id="togglePassword" type="button" class="btn btn-sm btn-outline-secondary">Show</button>
                                 </div>
                             </div>
                         </div>
@@ -286,4 +288,29 @@
             margin-right: 8px;
         }
     </style>
+    @section('scripts')
+    <script>
+        (function(){
+            const usernameActual = @json($upworkProfile->username);
+            const passwordActual = @json($upworkProfile->password);
+
+            const usernameField = document.getElementById('usernameField');
+            const passwordField = document.getElementById('passwordField');
+            const toggleUsername = document.getElementById('toggleUsername');
+            const togglePassword = document.getElementById('togglePassword');
+
+            toggleUsername?.addEventListener('click', function(){
+                const isHidden = usernameField.textContent === '********';
+                usernameField.textContent = isHidden ? usernameActual : '********';
+                this.textContent = isHidden ? 'Hide' : 'Show';
+            });
+
+            togglePassword?.addEventListener('click', function(){
+                const isHidden = passwordField.textContent === '********';
+                passwordField.textContent = isHidden ? passwordActual : '********';
+                this.textContent = isHidden ? 'Hide' : 'Show';
+            });
+        })();
+    </script>
+    @endsection
 @endsection

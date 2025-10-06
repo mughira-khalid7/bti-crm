@@ -8,7 +8,9 @@
     <title>@yield('title', 'BD CRM - Admin Dashboard')</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" href="{{ asset('faviconfd.ico') }}" sizes="any">
+    <link rel="shortcut icon" href="{{ asset('faviconfd.ico') }}">
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -149,7 +151,7 @@
             margin-left: 0;
             margin-right: 0;
             width: 100%;
-            padding-left: 240px;
+            padding-left: var(--sidebar-width);
         }
 
         /* Cards */
@@ -651,13 +653,17 @@
             margin: 0.5rem 0;
         }
 
+        /* Ensure containers are always fluid for admin */
         .container,
         .container-lg,
         .container-md,
         .container-sm,
         .container-xl,
         .container-xxl {
-            max-width: 1540px !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            padding-left: 1rem;
+            padding-right: 1rem;
         }
 
         /* Responsive */
@@ -744,10 +750,15 @@
                         Goals
                     </a>
                     <a href="{{ route('admin.proposals.index') }}"
-                        class="{{ request()->routeIs('admin.proposals.*') ? 'active' : '' }}">
+                        class="{{ request()->routeIs('admin.proposals.index') ? 'active' : '' }}">
                         <i class="fas fa-file-alt"></i>
                         Proposals
                     </a>
+                    {{-- <a href="{{ route('admin.proposals.deleted') }}"
+                        class="{{ request()->routeIs('admin.proposals.deleted') ? 'active' : '' }}">
+                        <i class="fas fa-trash-alt"></i>
+                        Deleted Proposals
+                    </a> --}}
                     <a href="{{ route('admin.upwork-profiles.index') }}"
                         class="{{ request()->routeIs('admin.upwork-profiles.*') ? 'active' : '' }}">
                         <i class="fas fa-user-circle"></i>
@@ -758,6 +769,11 @@
                         <i class="fas fa-calendar-alt"></i>
                         Calendar
                     </a>
+                    <a href="{{ route('admin.notes.index') }}"
+                        class="{{ request()->routeIs('admin.notes.*') ? 'active' : '' }}">
+                        <i class="fas fa-sticky-note"></i>
+                        Resource (Notes)
+                    </a>
 
 
                 </div>
@@ -766,7 +782,7 @@
         <div>
             <!-- Main Content -->
             <div class="main-content">
-                <div class="container">
+                <div class="container-fluid">
                     <!-- Navbar -->
                     <nav class="navbar navbar-custom">
                         <div class="d-flex align-items-center">
@@ -785,9 +801,11 @@
                                     <span class="text-dark">{{ $me->name ?? 'Admin User' }}</span>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i
-                                                class="fas fa-user me-2"></i>Edit Profile</a></li>
-
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                                            <i class="fas fa-user me-2"></i>Edit Profile
+                                        </a>
+                                    </li>
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>

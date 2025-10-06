@@ -37,10 +37,10 @@
                                 </td>
                                 <td>{{ $profile->country }}</td>
                                 <td>
-                                    <code class="bg-light px-2 py-1 rounded">{{ $profile->username }}</code>
+                                    <code class="bg-light px-2 py-1 rounded">********</code>
                                 </td>
                                 <td>
-                                    <code class="bg-light px-2 py-1 rounded">{{ $profile->password }}</code>
+                                    <code class="bg-light px-2 py-1 rounded">********</code>
                                 </td>
                                 <td>
                                     @if($profile->assignedBds->count() > 0)

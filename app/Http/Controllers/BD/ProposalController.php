@@ -18,6 +18,11 @@ class ProposalController extends Controller
         $user = Auth::user();
         $query = Proposal::where('user_id', $user->id)
             ->where('is_copy', false)  // Exclude copied proposals for BD users
+            ->where(function($q) {
+                // Hide BD-deleted proposals from BD view
+                $q->whereNull('deletion_type')
+                  ->orWhere('deletion_type', '!=', 'bd');
+            })
             ->orderByDesc('submitted_at');
 
         $dateFilter = $request->get('date', 'today');
@@ -111,7 +116,14 @@ class ProposalController extends Controller
 
     public function create()
     {
-        return view('bd.proposals.create');
+        $user = Auth::user();
+
+        // Get upwork profiles assigned to this BD user
+        $upworkProfiles = \App\Models\UpworkProfile::whereHas('users', function($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->get();
+
+        return view('bd.proposals.create', compact('upworkProfiles'));
     }
 
     public function store(Request $request)
@@ -123,6 +135,7 @@ class ProposalController extends Controller
             'url' => ['required', 'url', 'regex:/^https:\/\/(www\.)?upwork\.com\//i'],
             'notes' => 'nullable|string',
             'submitted_at' => 'required|date',
+            'upwork_profile_id' => 'required|exists:upwork_profiles,id',
         ], [
             'title.required' => 'Please enter a title for this proposal.',
             'title.max' => 'The title may not be greater than 255 characters.',
@@ -135,6 +148,8 @@ class ProposalController extends Controller
             'url.regex' => 'The job URL must be a valid Upwork URL (e.g., https://www.upwork.com/nx/proposals/...).',
             'submitted_at.required' => 'Select the date you submitted this proposal.',
             'submitted_at.date' => 'Submitted date must be a valid date.',
+            'upwork_profile_id.required' => 'Please select an Upwork profile.',
+            'upwork_profile_id.exists' => 'The selected Upwork profile is invalid.',
         ]);
 
         $validated['user_id'] = Auth::id();
@@ -178,6 +193,16 @@ class ProposalController extends Controller
     public function show(Proposal $proposal)
     {
         $this->authorizeOwnership($proposal);
+        // Reload proposal with only non-cancelled meeting data so cancelled meetings don't show
+        $proposal->load([
+            'upworkProfile',
+            'meeting' => function($q) {
+                $q->where(function($q2) {
+                    $q2->whereNull('status')->orWhere('status', '!=', 'cancelled');
+                })->orderByDesc('scheduled_at');
+            },
+            'meeting.bdUser'
+        ]);
         return view('bd.proposals.show', compact('proposal'));
     }
 
@@ -210,6 +235,8 @@ class ProposalController extends Controller
             'url.regex' => 'The job URL must be a valid Upwork URL (e.g., https://www.upwork.com/nx/proposals/...).',
             'submitted_at.required' => 'Select the date you submitted this proposal.',
             'submitted_at.date' => 'Submitted date must be a valid date.',
+            'upwork_profile_id.required' => 'Please select an Upwork profile.',
+            'upwork_profile_id.exists' => 'The selected Upwork profile is invalid.',
         ]);
 
         // Enforce per-user daily allowed connects only for TODAY on update
@@ -261,20 +288,24 @@ class ProposalController extends Controller
         // Store previous status for logging
         $previousStatus = $proposal->status;
 
-        // Change status to deleted before soft-deleting
-        $proposal->update(['status' => 'deleted']);
+        // Mark as BD-deleted (hidden from BD view but visible to admin)
+        $proposal->update([
+            'status' => 'deleted',
+            'deletion_type' => 'bd'
+        ]);
 
         $proposal->delete();
 
         ActionLog::create([
             'user_id' => Auth::id(),
             'action' => 'proposal_deleted',
-            'description' => 'BD deleted a proposal',
+            'description' => 'BD deleted a proposal (hidden from BD view, visible to admin)',
             'model_type' => Proposal::class,
             'model_id' => $proposal->id,
             'metadata' => [
                 'title' => $proposal->title,
-                'previous_status' => $previousStatus
+                'previous_status' => $previousStatus,
+                'deletion_type' => 'bd'
             ],
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),

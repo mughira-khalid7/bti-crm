@@ -73,6 +73,11 @@
                                                              data-event-description="{{ is_string($event['description']) ? $event['description'] : 'No description' }}"
                                                              data-event-time="{{ $event['time'] ?? (($event['date'] instanceof \Carbon\Carbon ? $event['date'] : \Carbon\Carbon::parse($event['date']))->format('g:i A')) }}"
                                                              data-event-user="{{ is_string($event['user'] ?? 'System') ? ($event['user'] ?? 'System') : 'System' }}"
+                                                             data-proposal-title="{{ $event['proposal_title'] ?? '' }}"
+                                                             data-meeting-type="{{ $event['meeting_type'] ?? '' }}"
+                                                             data-meeting-link="{{ $event['meeting_link'] ?? '' }}"
+                                                             data-location="{{ $event['location'] ?? '' }}"
+                                                             data-status="{{ $event['status'] ?? '' }}"
                                                              title="{{ (is_string($event['title']) ? $event['title'] : 'Event') }} - {{ (is_string($event['description']) ? $event['description'] : 'No description') }}">
                                                             <i class="{{ is_string($event['icon']) ? $event['icon'] : 'fas fa-info-circle' }} event-icon"></i>
                                                             <span class="event-title">{{ Str::limit(is_string($event['title']) ? $event['title'] : 'Event', 20) }}</span>
@@ -124,6 +129,22 @@
             <div class="event-detail">
                 <i class="fas fa-info-circle"></i>
                 <span id="modalEventDescription">Description</span>
+            </div>
+            <div class="event-detail" id="modalProposalRow" style="display:none;">
+                <i class="fas fa-file-alt"></i>
+                <span id="modalProposalTitle">Proposal</span>
+            </div>
+            <div class="event-detail" id="modalMeetingTypeRow" style="display:none;">
+                <i class="fas fa-video"></i>
+                <span id="modalMeetingType">Meeting Type</span>
+            </div>
+            <div class="event-detail" id="modalMeetingLinkRow" style="display:none;">
+                <i class="fas fa-external-link-alt"></i>
+                <a id="modalMeetingLink" href="#" target="_blank">Open Link</a>
+            </div>
+            <div class="event-detail" id="modalLocationRow" style="display:none;">
+                <i class="fas fa-map-marker-alt"></i>
+                <span id="modalLocation">Location</span>
             </div>
         </div>
     </div>
@@ -287,8 +308,8 @@
     margin: 15% auto;
     padding: 20px;
     border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
+    width: 95%;
+    max-width: 640px;
     position: relative;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
@@ -375,16 +396,27 @@
 </style>
 
 <script>
+function updateCalendarBy(monthDelta) {
+    const currentYear = {{ (int) $currentDate->format('Y') }};
+    const currentMonth = {{ (int) $currentDate->format('n') }}; // 1-12
+    const jsDate = new Date(currentYear, currentMonth - 1, 1);
+    jsDate.setMonth(jsDate.getMonth() + monthDelta);
+
+    const newYear = jsDate.getFullYear();
+    const newMonth = jsDate.getMonth() + 1; // back to 1-12
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('year', newYear);
+    url.searchParams.set('month', newMonth);
+    window.location.href = url.toString();
+}
+
 function previousMonth() {
-    // This would typically make an AJAX request to load the previous month
-    // For now, we'll just show an alert
-    alert('Previous month functionality would be implemented here');
+    updateCalendarBy(-1);
 }
 
 function nextMonth() {
-    // This would typically make an AJAX request to load the next month
-    // For now, we'll just show an alert
-    alert('Next month functionality would be implemented here');
+    updateCalendarBy(1);
 }
 
 // Event modal functionality
@@ -396,6 +428,10 @@ function showEventModal(eventElement) {
     const eventDescription = eventElement.getAttribute('data-event-description');
     const eventTime = eventElement.getAttribute('data-event-time');
     const eventUser = eventElement.getAttribute('data-event-user');
+    const proposalTitle = eventElement.getAttribute('data-proposal-title') || '';
+    const meetingType = eventElement.getAttribute('data-meeting-type') || '';
+    const meetingLink = eventElement.getAttribute('data-meeting-link') || '';
+    const location = eventElement.getAttribute('data-location') || '';
 
     // Get the date from the calendar day
     const dayElement = eventElement.closest('.calendar-day');
@@ -409,6 +445,41 @@ function showEventModal(eventElement) {
     document.getElementById('modalEventTime').textContent = eventTime;
     document.getElementById('modalEventUser').textContent = eventUser;
     document.getElementById('modalEventDate').textContent = `${currentMonth} ${dayNumber}, ${currentYear}`;
+
+    // Optional rows
+    const proposalRow = document.getElementById('modalProposalRow');
+    const meetingTypeRow = document.getElementById('modalMeetingTypeRow');
+    const meetingLinkRow = document.getElementById('modalMeetingLinkRow');
+    const locationRow = document.getElementById('modalLocationRow');
+
+    if (proposalTitle) {
+        document.getElementById('modalProposalTitle').textContent = proposalTitle;
+        proposalRow.style.display = 'flex';
+    } else {
+        proposalRow.style.display = 'none';
+    }
+
+    if (meetingType) {
+        document.getElementById('modalMeetingType').textContent = meetingType;
+        meetingTypeRow.style.display = 'flex';
+    } else {
+        meetingTypeRow.style.display = 'none';
+    }
+
+    if (meetingLink) {
+        const linkEl = document.getElementById('modalMeetingLink');
+        linkEl.href = meetingLink;
+        meetingLinkRow.style.display = 'flex';
+    } else {
+        meetingLinkRow.style.display = 'none';
+    }
+
+    if (location) {
+        document.getElementById('modalLocation').textContent = location;
+        locationRow.style.display = 'flex';
+    } else {
+        locationRow.style.display = 'none';
+    }
 
     // Set appropriate icon based on event type
     const iconMap = {

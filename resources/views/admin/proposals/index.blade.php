@@ -10,7 +10,10 @@
             <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Proposals</h5>
             <div>
                 <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary me-2">Back</a>
-                <a href="{{ route('admin.users.index') }}" class="btn btn-primary">
+                <a href="{{ route('admin.proposals.create') }}" class="btn btn-primary me-2">
+                    <i class="fas fa-plus me-1"></i> Add Proposal
+                </a>
+                <a href="{{ route('admin.users.index') }}" class="btn btn-outline-primary">
                     <i class="fas fa-users me-1"></i> Manage BDs
                 </a>
             </div>
@@ -132,6 +135,19 @@
                                             <i class="fas fa-copy ms-1" title="This is a copy"></i>
                                         @endif
                                     </span>
+                                    @if ($proposal->deleted_at && $proposal->deletion_type === 'bd')
+                                        <div class="mt-1">
+                                            <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">
+                                                <i class="fas fa-user-slash me-1"></i>BD Deleted
+                                            </span>
+                                        </div>
+                                    @elseif ($proposal->deleted_at && $proposal->deletion_type === 'admin')
+                                        <div class="mt-1">
+                                            <span class="badge bg-danger" style="font-size: 0.65rem;">
+                                                <i class="fas fa-trash-alt me-1"></i>Admin Deleted
+                                            </span>
+                                        </div>
+                                    @endif
                                 </td>
                                 <td>{{ \Carbon\Carbon::parse($proposal->submitted_at)->format('M d, Y') }}</td>
                                 <td class="text-end">
@@ -145,13 +161,14 @@
                                             <i class="fas fa-arrow-right"></i> Move to Interview
                                         </button>
                                     @endif
-                                    @if (!$proposal->deleted_at)
+                                    @if (!$proposal->deleted_at || $proposal->deletion_type !== 'admin')
+                                        <!-- Show delete button for active proposals and BD-deleted proposals -->
                                         <form method="POST" action="{{ route('admin.proposals.destroy', $proposal) }}"
                                             class="d-inline delete-form">
                                             @csrf
                                             @method('DELETE')
                                             <button type="button" class="btn btn-sm btn-outline-danger"
-                                                onclick="confirmDelete(this.closest('form'))">
+                                                onclick="confirmDelete(this.closest('form'), '{{ $proposal->title }}', {{ $proposal->deleted_at ? 'true' : 'false' }})">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -176,17 +193,30 @@
 
 @section('scripts')
     <script>
-        function confirmDelete(form) {
+        function confirmDelete(form, title, isDeleted) {
+            const isPermanent = isDeleted === 'true';
+
             Swal.fire({
-                title: 'Are you sure?',
-                text: 'Do you want to delete this proposal?',
-                icon: 'warning',
+                title: isPermanent ? 'Permanent Deletion' : 'Delete Proposal',
+                text: isPermanent
+                    ? `Are you sure you want to PERMANENTLY delete "${title}"? This action cannot be undone and will remove all data including versions and logs.`
+                    : `Do you want to delete "${title}"?`,
+                icon: isPermanent ? 'error' : 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#d33',
+                confirmButtonColor: isPermanent ? '#dc3545' : '#d33',
                 cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!'
+                confirmButtonText: isPermanent ? 'Yes, delete permanently!' : 'Yes, delete it!',
+                reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
+                    // Add a hidden input to indicate permanent deletion
+                    if (isPermanent) {
+                        const permanentInput = document.createElement('input');
+                        permanentInput.type = 'hidden';
+                        permanentInput.name = 'permanent';
+                        permanentInput.value = '1';
+                        form.appendChild(permanentInput);
+                    }
                     form.submit();
                 }
             });

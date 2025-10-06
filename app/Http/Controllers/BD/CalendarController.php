@@ -6,21 +6,30 @@ use App\Http\Controllers\Controller;
 use App\Models\Proposal;
 use App\Models\ActionLog;
 use App\Models\Goal;
+use App\Models\Meeting;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class CalendarController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Static date for demonstration - you can modify this as needed
-        $currentDate = now();
+        // Read month/year from query; default to current
+        $year = (int) $request->query('year', now()->year);
+        $month = (int) $request->query('month', now()->month);
 
-        // Get calendar data for the current month
+        // Normalize invalid inputs
+        if ($month < 1 || $month > 12) {
+            $month = now()->month;
+        }
+
+        $currentDate = Carbon::create($year, $month, 1);
+
+        // Get calendar data for the selected month
         $calendarData = $this->getCalendarData($currentDate);
 
-        // Get CRM events for the current month (user-specific)
+        // Get CRM events for the selected month (user-specific)
         $events = $this->getCrmEvents($currentDate);
 
         return view('bd.calendar.index', compact('calendarData', 'currentDate', 'events'));
@@ -115,6 +124,7 @@ class CalendarController extends Controller
 
         // Get user's recent activity logs for this month
         $activities = ActionLog::where('user_id', $userId)
+            ->whereNotIn('action', ['login', 'user_login'])
             ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
             ->latest()
             ->limit(15)
@@ -129,6 +139,38 @@ class CalendarController extends Controller
                 'date' => $activity->created_at,
                 'color' => (string) $this->getEventColor('activity', $activity->action),
                 'icon' => (string) $this->getActivityIcon($activity->action)
+            ];
+        }
+
+        // Get user's scheduled meetings for this month (as owner or participant)
+        $meetings = Meeting::whereBetween('scheduled_at', [$startOfMonth, $endOfMonth])
+            ->where(function($q){
+                $q->whereNull('status')->orWhere('status', '!=', 'cancelled');
+            })
+            ->where(function($q) use ($userId) {
+                $q->where('bd_user_id', $userId)
+                  ->orWhereHas('participants', function($p) use ($userId) {
+                      $p->where('users.id', $userId);
+                  });
+            })
+            ->with(['proposal', 'bdUser'])
+            ->get();
+
+        foreach ($meetings as $meeting) {
+            $events[] = [
+                'id' => 'meeting_' . (string) $meeting->id,
+                'type' => 'meeting',
+                'title' => (string) $meeting->title,
+                'description' => (string) ($meeting->description ?? 'Meeting with client'),
+                'date' => $meeting->scheduled_at,
+                'user' => (string) (($meeting->bdUser && $meeting->bdUser->name) ? $meeting->bdUser->name : 'System'),
+                'status' => (string) $meeting->status,
+                'color' => (string) $this->getEventColor('meeting', $meeting->status),
+                'icon' => (string) $this->getMeetingIcon($meeting->meeting_type),
+                'proposal_title' => (string) ($meeting->proposal->title ?? 'Unknown Proposal'),
+                'meeting_type' => (string) $meeting->meeting_type,
+                'meeting_link' => (string) ($meeting->meeting_link ?? ''),
+                'location' => (string) ($meeting->location ?? ''),
             ];
         }
 
@@ -170,6 +212,10 @@ class CalendarController extends Controller
                 'time' => isset($event['time']) ? $toString($event['time']) : null,
                 'status' => isset($event['status']) ? $toString($event['status']) : null,
                 'isStatic' => isset($event['isStatic']) ? (bool) $event['isStatic'] : false,
+                'proposal_title' => $toString($event['proposal_title'] ?? ''),
+                'meeting_type' => $toString($event['meeting_type'] ?? ''),
+                'meeting_link' => $toString($event['meeting_link'] ?? ''),
+                'location' => $toString($event['location'] ?? ''),
             ];
         }, $events);
 
@@ -283,7 +329,8 @@ class CalendarController extends Controller
                 'submitted' => '#3498db',
                 'interviewing' => '#f39c12',
                 'hired' => '#2ecc71',
-                'rejected' => '#e74c3c'
+                'rejected' => '#e74c3c',
+                'meeting_scheduled' => '#e67e22'
             ],
             'activity' => [
                 'created' => '#2ecc71',
@@ -291,7 +338,12 @@ class CalendarController extends Controller
                 'deleted' => '#e74c3c',
                 'login' => '#9b59b6'
             ],
-            'meeting' => '#e74c3c',
+            'meeting' => [
+                'scheduled' => '#e74c3c',
+                'completed' => '#2ecc71',
+                'cancelled' => '#95a5a6',
+                'rescheduled' => '#f39c12'
+            ],
             'interview' => '#9b59b6',
             'deadline' => '#f39c12',
             'upwork' => '#2ecc71',
@@ -306,6 +358,10 @@ class CalendarController extends Controller
             return (string) $colors['activity'][$status];
         }
 
+        if ($type === 'meeting' && isset($colors['meeting'][$status])) {
+            return (string) $colors['meeting'][$status];
+        }
+
         // Handle case where type exists but status doesn't match
         if ($type === 'proposal') {
             return (string) ($colors['proposal']['submitted'] ?? '#95a5a6');
@@ -313,6 +369,10 @@ class CalendarController extends Controller
 
         if ($type === 'activity') {
             return (string) ($colors['activity']['created'] ?? '#95a5a6');
+        }
+
+        if ($type === 'meeting') {
+            return (string) ($colors['meeting']['scheduled'] ?? '#95a5a6');
         }
 
         return (string) ($colors[$type] ?? '#95a5a6');
@@ -329,5 +389,16 @@ class CalendarController extends Controller
         ];
 
         return (string) ($icons[$action] ?? 'fas fa-info-circle');
+    }
+
+    private function getMeetingIcon($meetingType)
+    {
+        $icons = [
+            'video_call' => 'fas fa-video',
+            'phone_call' => 'fas fa-phone',
+            'in_person' => 'fas fa-handshake'
+        ];
+
+        return (string) ($icons[$meetingType] ?? 'fas fa-calendar');
     }
 }

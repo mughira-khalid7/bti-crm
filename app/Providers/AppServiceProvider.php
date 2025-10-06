@@ -3,6 +3,7 @@
 namespace App\Providers;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,5 +21,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
+        // Ensure Carbon uses the same timezone as app configuration at runtime
+        date_default_timezone_set(config('app.timezone'));
+        Carbon::setLocale(config('app.locale'));
     }
 }

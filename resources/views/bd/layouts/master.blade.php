@@ -8,7 +8,9 @@
     <title>@yield('title', 'BD CRM - Business Developer Dashboard')</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" href="{{ asset('faviconfd.ico') }}" sizes="any">
+    <link rel="shortcut icon" href="{{ asset('faviconfd.ico') }}">
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -16,8 +18,15 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- Quill.js CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.bubble.css" rel="stylesheet">
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Quill.js for rich text editing -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
     <style>
         :root {
@@ -588,6 +597,8 @@
             }
         }
     </style>
+
+    @stack('styles')
 </head>
 
 <body>
@@ -618,6 +629,10 @@
             <a href="{{ route('bd.calendar.index') }}" class="{{ request()->routeIs('bd.calendar.*') ? 'active' : '' }}">
                 <i class="fas fa-calendar-alt"></i>
                 Calendar
+            </a>
+            <a href="{{ route('bd.notes.index') }}" class="{{ request()->routeIs('bd.notes.*') ? 'active' : '' }}">
+                <i class="fas fa-sticky-note"></i>
+                Resource (Notes)
             </a>
         </div>
     </nav>
@@ -919,6 +934,7 @@
     </script>
 
     @yield('scripts')
+    @stack('scripts')
 </body>
 
 </html>

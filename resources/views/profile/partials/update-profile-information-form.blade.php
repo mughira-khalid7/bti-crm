@@ -10,13 +10,13 @@
         @enderror
     </div>
 
-    {{-- <div class="mb-3">
+    <div class="mb-3">
         <label for="email" class="form-label fw-semibold">Email</label>
         <input id="email" name="email" type="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $user->email) }}" required autocomplete="username">
         @error('email')
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
-    </div> --}}
+    </div>
 
     <div class="mb-3">
         <label for="avatar" class="form-label fw-semibold">Avatar</label>
